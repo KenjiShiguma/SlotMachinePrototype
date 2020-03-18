@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1923947657293954643}
+  - component: {fileID: 612275025}
   m_Layer: 0
   m_Name: Slot
   m_TagString: Untagged
@@ -27,13 +28,25 @@ Transform:
   m_LocalPosition: {x: 0, y: 1, z: -13.81}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 1923947656589277594}
+  - {fileID: 667328888181992134}
   - {fileID: 5294026421807457023}
   - {fileID: 5294026421858648339}
   - {fileID: 5294026421696854867}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &612275025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1923947657293954640}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af707eb58abf17c46838f43a2b1b6d11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1923947657270828272
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -259,7 +272,7 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1923947657651136176}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &5294026420627612793
+--- !u!1001 &6523957597690263333
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -328,9 +341,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 214d47dba0923e1429232a440bd94aae, type: 3}
---- !u!4 &1923947656589277594 stripped
+--- !u!4 &667328888181992134 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6037942575526600163, guid: 214d47dba0923e1429232a440bd94aae,
     type: 3}
-  m_PrefabInstance: {fileID: 5294026420627612793}
+  m_PrefabInstance: {fileID: 6523957597690263333}
   m_PrefabAsset: {fileID: 0}
