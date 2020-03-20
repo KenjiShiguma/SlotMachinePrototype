@@ -24,7 +24,7 @@ public class Panel : MonoBehaviour
         if (panelSprites == null)
         {
             panelSprites = new Dictionary<PanelIcon, Sprite>();
-            panelSprites.Add(PanelIcon.Default, null);
+            panelSprites.Add(PanelIcon.NULL, null);
             panelSprites.Add(PanelIcon.Apple, Resources.Load<Sprite>("_Images/apple"));
             panelSprites.Add(PanelIcon.Kiwi, Resources.Load<Sprite>("_Images/kiwi"));
             panelSprites.Add(PanelIcon.Lemon, Resources.Load<Sprite>("_Images/lemon"));
@@ -39,7 +39,7 @@ public class Panel : MonoBehaviour
         if (panelScores == null)
         {
             panelScores = new Dictionary<PanelIcon, int>();
-            panelScores.Add(PanelIcon.Default, 0);
+            panelScores.Add(PanelIcon.NULL, 0);
             panelScores.Add(PanelIcon.Apple, 100);
             panelScores.Add(PanelIcon.Kiwi, 100);
             panelScores.Add(PanelIcon.Lemon, 100);
@@ -54,7 +54,7 @@ public class Panel : MonoBehaviour
         icon = this.transform.Find("Icon").GetComponent<SpriteRenderer>();
 
         // Pick the fruit
-        this.SetFruit(PanelIcon.Default);
+        this.SetFruit(PanelIcon.NULL);
 
     }
 
@@ -94,7 +94,7 @@ public class Panel : MonoBehaviour
 // Defines the fruits in the game
 public enum PanelIcon
 {
-    Default = 0,
+    NULL = 0,
     Apple = 1,
     Kiwi = 2,
     Lemon = 3,
