@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 9:30 PM | Last Edited: 03/18/2020 8:15 PM
+// Start Date: 03/17/2020 9:30 PM | Last Edited: 03/21/2020 12:05 AM
 // This script helps modify Panels
 
 using System.Collections;
@@ -17,6 +17,8 @@ public class Panel : MonoBehaviour
     private int points; // the points gained by this fruit
     public static Dictionary<PanelIcon, Sprite> panelSprites; // Holds all panel Sprites // TODO: Make this a Singleton
     public static Dictionary<PanelIcon, int> panelScores; // Holds all fruit scores // TODO: Make this a Singleton
+    private PanelState state = 0; // determines how panel is displayed
+    private RawImage panelBorder; // the border around the panel
 
     private void Start()
     {
@@ -56,6 +58,10 @@ public class Panel : MonoBehaviour
         // Pick the fruit
         this.SetFruit(PanelIcon.NULL);
 
+        // Grab a reference to the panelBorder
+        this.panelBorder = this.transform.Find("Canvas").transform.Find("PanelBorder").GetComponent<RawImage>();
+        this.SetState(PanelState.Default);
+
     }
 
     // TODO: Make an event listener if the fruit value changes dynamically to call this function
@@ -82,16 +88,48 @@ public class Panel : MonoBehaviour
 
     }
 
+    // Sets the PanelState and displays the panel accordingly
+    public void SetState(PanelState state)
+    {
+        this.state = state;
+        Color c = new Color(this.icon.color.r, this.icon.color.g, this.icon.color.b, 1);
+        switch (this.state)
+        {
+            case PanelState.Default:
+                this.icon.color = c;
+                c.a = 0;
+                this.panelBorder.color = c;
+                break;
+
+            case PanelState.Win:
+                this.icon.color = c;
+                this.panelBorder.color = c;
+                break;
+
+            case PanelState.Lose:
+                this.panelBorder.color = c;
+                c.a = 0.25f;
+                this.icon.color = c;
+                break;
+        }
+
+    }
+
     // Getters
     public PanelIcon GetFruit()
     {
         return this.fruit;
     }
 
+    public PanelState GetState()
+    {
+        return this.state;
+    }
+
 }
 
 
-// Defines the fruits in the game
+// Defines the fruit icons in the game
 public enum PanelIcon
 {
     NULL = 0,
@@ -104,3 +142,12 @@ public enum PanelIcon
     Pomegranate = 7,
     Watermelon = 8
 }
+
+// Defines how to display the panel after each Spin
+public enum PanelState
+{
+    Default = 0, // panel has full transparency but no border
+    Win = 1, // panel has full transparency and a border
+    Lose = 2 // panel has reduced transpency and a border
+}
+

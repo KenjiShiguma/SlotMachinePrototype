@@ -25,7 +25,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1923947657293954640}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -13.81}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 667328888181992134}
@@ -54,6 +54,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1923947657293954643}
     m_Modifications:
+    - target: {fileID: 5690503684656416033, guid: 214d47dba0923e1429232a440bd94aae,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6037942575526600163, guid: 214d47dba0923e1429232a440bd94aae,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -114,6 +119,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Panel (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 6037942575526600167, guid: 214d47dba0923e1429232a440bd94aae,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 214d47dba0923e1429232a440bd94aae, type: 3}
 --- !u!4 &5294026421858648339 stripped
@@ -129,6 +139,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1923947657293954643}
     m_Modifications:
+    - target: {fileID: 5690503684656416033, guid: 214d47dba0923e1429232a440bd94aae,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6037942575526600163, guid: 214d47dba0923e1429232a440bd94aae,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -204,6 +219,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1923947657293954643}
     m_Modifications:
+    - target: {fileID: 5690503684656416033, guid: 214d47dba0923e1429232a440bd94aae,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6037942575526600163, guid: 214d47dba0923e1429232a440bd94aae,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -263,6 +283,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Panel (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6037942575526600167, guid: 214d47dba0923e1429232a440bd94aae,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 214d47dba0923e1429232a440bd94aae, type: 3}
