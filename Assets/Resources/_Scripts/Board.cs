@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 2:20 AM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 6:00 AM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -39,9 +39,9 @@ public class Board : MonoBehaviour
         // Create the score text
         score = 0;
         scoreText = GameObject.Find("ScoreText").GetComponent<Text>();
-        scoreText.text = "Score: " + score.ToString("D7");
+        scoreText.text = score.ToString("D7");
         gainedText = GameObject.Find("PointsGainedText").GetComponent<Text>();
-        gainedText.text = "Gained: " + 0;
+        gainedText.text = "";
 
         // Create the GameBoard
         slots = new Slot[5]; // because the GameBoard is a 4x5
@@ -426,7 +426,7 @@ public class Board : MonoBehaviour
 
                 // Report the max occurance and pay the player if needed
                 int pointsGained = 0;
-                if (absMaxOccurance >= 2)
+                if (absMaxOccurance >= 2) // TODO: Change to 3 on Release Build; Keep 2 for Debug Build
                 {
                     pointsGained = (Panel.panelScores[absMaxPanel] * absMaxOccurance);
                 }
@@ -439,14 +439,14 @@ public class Board : MonoBehaviour
                 if(pointsGained > 0)
                 {
                     yield return new WaitForSeconds(0.50f);
-                    gainedText.text = "Gained: " + pointsGained;
+                    gainedText.text = "+" + pointsGained;
                     yield return DisplayWinningPayline();
                 }
 
                 // Update Score UI // TODO: Make this a EventListner triggered UI update thing.
                 score += pointsGained;
-                scoreText.text = "Score: " + score.ToString("D7");
-                gainedText.text = "Gained: " + 0;
+                scoreText.text = score.ToString("D7");
+                gainedText.text = "";
             }
 
             // Reset the isSpinning lock
