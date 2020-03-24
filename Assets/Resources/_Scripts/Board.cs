@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 6:00 AM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 6:25 PM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -25,6 +25,7 @@ public class Board : MonoBehaviour
 
     private bool isSpinning = false; // flag variable to lock the SpinButton if the user is already spinning
     private bool isLastSlotDone = false; // flag variable to lock EvaluateBoard() until last Slot finishes spinning
+    private Toggle autoSpin; // flag variable to loop Spin() if user has AutoSpin enabled
 
     // Initalize the variables
     private void Start()
@@ -35,6 +36,8 @@ public class Board : MonoBehaviour
         spinText = GameObject.Find("SpinText").GetComponent<Text>();
         spinText.text = "Spins: " + spinCounter.ToString("D3");
         spinButton = GameObject.Find("SpinButton").GetComponent<Button>();
+        autoSpin = GameObject.Find("AutoSpinToggle").GetComponent<Toggle>();
+
 
         // Create the score text
         score = 0;
@@ -426,7 +429,7 @@ public class Board : MonoBehaviour
 
                 // Report the max occurance and pay the player if needed
                 int pointsGained = 0;
-                if (absMaxOccurance >= 2) // TODO: Change to 3 on Release Build; Keep 2 for Debug Build
+                if (absMaxOccurance >= 3) // TODO: Change to 3 on Release Build; Keep 2 for Debug Build
                 {
                     pointsGained = (Panel.panelScores[absMaxPanel] * absMaxOccurance);
                 }
@@ -451,7 +454,17 @@ public class Board : MonoBehaviour
 
             // Reset the isSpinning lock
             this.isSpinning = false;
-            this.spinButton.interactable = true;
+            // Spin again if AutoSpin is enabled
+            if (autoSpin.isOn)
+            {
+                Spin();
+            }
+            else
+            {
+                this.spinButton.interactable = true;
+            }
+
+            
         }
 
         // Coroutine to show the winning panels animation
