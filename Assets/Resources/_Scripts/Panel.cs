@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 9:30 PM | Last Edited: 03/21/2020 12:05 AM
+// Start Date: 03/17/2020 9:30 PM | Last Edited: 03/24/2020 1:45 AM
 // This script helps modify Panels
 
 using System.Collections;
@@ -12,11 +12,11 @@ public class Panel : MonoBehaviour
 {
     // Declare the variables
 
-    private PanelIcon fruit; // the fruit on the panel
-    private SpriteRenderer icon; // a reference to Sprite component | the fruit image on the panel
+    [SerializeField] private PanelIcon fruit; // the fruit on the panel
+    private Image icon; // the fruit image on the panel (they actually live in the Slot's Canvas)
     private int points; // the points gained by this fruit
-    public static Dictionary<PanelIcon, Sprite> panelSprites; // Holds all panel Sprites // TODO: Make this a Singleton
-    public static Dictionary<PanelIcon, int> panelScores; // Holds all fruit scores // TODO: Make this a Singleton
+    public static Dictionary<PanelIcon, Sprite> panelSprites; // Holds all panel Sprites 
+    public static Dictionary<PanelIcon, int> panelScores; // Holds all fruit scores
     private PanelState state = 0; // determines how panel is displayed
     private RawImage panelBorder; // the border around the panel
 
@@ -53,10 +53,10 @@ public class Panel : MonoBehaviour
         }
 
         // Grab the sprite reference and change icon to match the fruit
-        icon = this.transform.Find("Icon").GetComponent<SpriteRenderer>();
+        icon = GameObject.Find("Icon (0)").GetComponent<Image>();
 
         // Pick the fruit
-        this.SetFruit(PanelIcon.NULL);
+        //this.SetFruit(PanelIcon.Pear);
 
         // Grab a reference to the panelBorder
         this.panelBorder = this.transform.Find("Canvas").transform.Find("PanelBorder").GetComponent<RawImage>();
@@ -64,28 +64,17 @@ public class Panel : MonoBehaviour
 
     }
 
-    // TODO: Make an event listener if the fruit value changes dynamically to call this function
-    
 
-    // Randomly chooses a fruit for the panel, 1-8 or 1-(how many fruit are in the game)
-    public void SpinPanel()
-    {
-        int randFruit = UnityEngine.Random.Range(1, Enum.GetNames(typeof(PanelIcon)).Length);
-        /*Debug.Log("Time: " + Time.time + " | " + "Spinning this panel..." + " | " +
-            "CurrentFruit: " + fruit + " | " + "Rolled Fruit: " + (PanelIcon)randFruit + 
-            "(" + randFruit + ")");*/
-        SetFruit((PanelIcon)randFruit);
-    }
 
     // Setters
 
+    // TODO: Make an event listener if the fruit value changes dynamically to call this function
     // Sets the fruit and updates the image and value
     public void SetFruit(PanelIcon icon)
     {
         fruit = icon;
         this.icon.sprite = panelSprites[fruit]; // Sets the sprite of the fruit
         points = panelScores[fruit]; // Set the value of the fruit
-
     }
 
     // Sets the PanelState and displays the panel accordingly
@@ -115,6 +104,12 @@ public class Panel : MonoBehaviour
 
     }
 
+    // Sets the reference to the icon's image or w/e
+    public void SetImage(Image image)
+    {
+        this.icon = image;
+    }
+
     // Getters
     public PanelIcon GetFruit()
     {
@@ -124,6 +119,11 @@ public class Panel : MonoBehaviour
     public PanelState GetState()
     {
         return this.state;
+    }
+
+    public Image GetImage()
+    {
+        return this.icon;
     }
 
 }

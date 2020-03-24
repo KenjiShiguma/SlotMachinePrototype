@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/21/2020 12:05 AM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 2:20 AM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -22,7 +22,9 @@ public class Board : MonoBehaviour
     [SerializeField] private int score; // number of points player has
     private Text scoreText; // the text for the score
     private Text gainedText; // shows how many points were gained per payline per spin
-    private bool isSpinning = false; // a flag variable to lock the spinning if the user is already spinning
+
+    private bool isSpinning = false; // flag variable to lock the SpinButton if the user is already spinning
+    private bool isLastSlotDone = false; // flag variable to lock EvaluateBoard() until last Slot finishes spinning
 
     // Initalize the variables
     private void Start()
@@ -71,29 +73,100 @@ public class Board : MonoBehaviour
         }
         else
         {
+            // Lock the Spin Button until the Spin is over
             this.isSpinning = true;
             this.spinButton.interactable = false;
             spinCounter--;
             spinText.text = "Spins: " + spinCounter.ToString("D3");
-            // Spin each Panel on the Board
-            foreach(Slot slot in slots)
-            {
-                foreach(Panel panel in slot.getPanels())
-                {
-                    panel.SpinPanel();
-                }
-            }
 
+            // Spin the reel of each Slot and generate a new board
+            StartCoroutine(SpinEachSlot());
+            
             // Evaluate the board for the pay table
             EvaluateBoard();
             
         }
+
+        // Coroutine to make the reel spin
+        IEnumerator SpinSlot(Slot slot)
+        {
+            isLastSlotDone = false;
+            Vector2 pos = Vector3.zero;
+
+            Timer timer = new Timer(3.75f); // Controls how long each Slot spins for
+            while (!timer.IsTimeUp())
+            {
+                // Make all icons in the slot move down
+                foreach (Image image in slot.GetIcons())
+                {
+                    image.rectTransform.Translate(Vector2.down * 100 * Time.deltaTime);
+                    // Randomly pick a new PanelIcon for the Icon once it goes offscreen, and move it to the top
+                    if (image.rectTransform.position.y <= -35)
+                    {
+                        int randFruit = UnityEngine.Random.Range(1, Enum.GetNames(typeof(PanelIcon)).Length);
+                        image.sprite = Panel.panelSprites[(PanelIcon)randFruit];
+                        pos.x = image.rectTransform.localPosition.x;
+                        pos.y = 15;
+                        image.rectTransform.position = pos;
+                        pos = Vector2.zero;
+                        image.rectTransform.SetAsFirstSibling();
+                    }
+                }
+
+                //Debug.Log("Time: " + Time.time + " | " + "Time Left on Timer: " + timer.GetTimeLeft());
+                timer.Countdown();
+                yield return null;
+
+            }
+
+            // Smoothly mount the icons into the correct locations
+            int[] lerpYTargets = { 10, 0, -10, -20, -30 }; // the yPos of the resting position of each Slot Icon
+            timer.SetCooldown(0.50f);
+            timer.ResetTimer();
+            
+            while (!timer.IsTimeUp())
+            {
+                for (int i = 0; i < lerpYTargets.Length; i++)
+                {
+                    var image = slot.GetIcons()[i];
+                    pos.x = image.rectTransform.localPosition.x;
+                    pos.y = Mathf.Lerp(image.rectTransform.localPosition.y, 
+                        lerpYTargets[image.rectTransform.GetSiblingIndex()] + 10, timer.GetPercentDone());
+                    image.rectTransform.localPosition = pos;
+                }
+
+                timer.Countdown();
+                yield return null;
+            }
+
+            // Update each Panel in this Slot with the new PanelIcons/Sprites
+            slot.SetEachPanelIcons();
+
+            // Allow the EvaluateBoard() function to run after the last Slot finishes spinning
+            if(slot == this.slots[this.slots.Length - 1])
+            {
+                isLastSlotDone = true;
+            }
+
+            
+        }
+
+        // Coroutine to make all the reels spin almost concurrently
+        IEnumerator SpinEachSlot()
+        {
+            foreach(Slot slot in this.slots)
+            {
+                StartCoroutine(SpinSlot(slot));
+                yield return new WaitForSeconds(0.25f);
+            }
+        }
+
     }
 
     // Determines the payout based on predefined pay tables/permutations of the icons
     private void EvaluateBoard()
     {
-        PayTableLine tableLine = PayTableLine.HorizontalTop; // Start with the first paytableine, horizontal top row 
+        PayTableLine tableLine = PayTableLine.HorizontalTop; // Start with first PayTableLine, horizontal top row 
         int slotIndex = slots.Length - 1; // current slotIndex; starts at top right, moves left
         int panelIndex = 0; // current panelIndex; starts at top, moves down
         // panelIndedx will remain 0 for the first row's pay table
@@ -110,10 +183,10 @@ public class Board : MonoBehaviour
         int absMaxIndex = 0; // where the index of the absMaxOcc starts
 
         // Main Loop For Each PayTableLine:
-        StartCoroutine(EvaluateEachPayline());//EvaluateEachPayline();
+        StartCoroutine(EvaluateEachPayline());
 
 
-        // Local Function to Pick the panel based on the current payline
+        // Local Function that picks panelIndex based on current PayTableLine and slotIndex
         void PanelIndexFromPayline()
         {
             switch (tableLine)
@@ -134,19 +207,12 @@ public class Board : MonoBehaviour
                     panelIndex = 3;
                     break;
 
-                case PayTableLine.ParabolicUTop:
-                    if (slotIndex == 0 || slotIndex == slots.Length - 1)
+                case PayTableLine.BigVTop:
+                    if(slotIndex == 0 || slotIndex == slots.Length-1)
                     {
                         panelIndex = 0;
                     }
-                    else
-                    {
-                        panelIndex = 1;
-                    }
-                    break;
-
-                case PayTableLine.ParabolicUMiddle:
-                    if (slotIndex == 0 || slotIndex == slots.Length - 1)
+                    else if(slotIndex == 1 || slotIndex == slots.Length - 2)
                     {
                         panelIndex = 1;
                     }
@@ -156,8 +222,12 @@ public class Board : MonoBehaviour
                     }
                     break;
 
-                case PayTableLine.ParabolicUBottom:
+                case PayTableLine.BigVBottom:
                     if (slotIndex == 0 || slotIndex == slots.Length - 1)
+                    {
+                        panelIndex = 1;
+                    }
+                    else if (slotIndex == 1 || slotIndex == slots.Length - 2)
                     {
                         panelIndex = 2;
                     }
@@ -167,15 +237,115 @@ public class Board : MonoBehaviour
                     }
                     break;
 
-                    //TODO: ParabolicNTop~Bottom (8-10), BigVTop~Bottom (11-12), BigATop~Bottom (13-14)
+                case PayTableLine.BigABottom:
+                    if (slotIndex == 0 || slotIndex == slots.Length - 1)
+                    {
+                        panelIndex = 3;
+                    }
+                    else if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 2;
+                    }
+                    else
+                    {
+                        panelIndex = 1;
+                    }
+                    break;
+
+                case PayTableLine.BigATop:
+                    if (slotIndex == 0 || slotIndex == slots.Length - 1)
+                    {
+                        panelIndex = 2;
+                    }
+                    else if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 1;
+                    }
+                    else
+                    {
+                        panelIndex = 0;
+                    }
+                    break;
+
+                case PayTableLine.WTop:
+                    if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 1;
+                    }
+                    else
+                    {
+                        panelIndex = 0;
+                    }
+                    break;
+
+                case PayTableLine.WMiddle:
+                    if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 2;
+                    }
+                    else
+                    {
+                        panelIndex = 1;
+                    }
+                    break;
+
+                case PayTableLine.WBottom:
+                    if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 3;
+                    }
+                    else
+                    {
+                        panelIndex = 2;
+                    }
+                    break;
+
+                case PayTableLine.MTop:
+                    if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 0;
+                    }
+                    else
+                    {
+                        panelIndex = 1;
+                    }
+                    break;
+
+                case PayTableLine.MMiddle:
+                    if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 1;
+                    }
+                    else
+                    {
+                        panelIndex = 2;
+                    }
+                    break;
+
+                case PayTableLine.MBottom:
+                    if (slotIndex == 1 || slotIndex == slots.Length - 2)
+                    {
+                        panelIndex = 2;
+                    }
+                    else
+                    {
+                        panelIndex = 3;
+                    }
+                    break;
+
+
+
             }
         }
 
         // Local Coroutine Function to Evaluate All Paylines Procedurally
         IEnumerator EvaluateEachPayline()
         {
+            // Only start this after all Slot reels have finished spinning
+            yield return new WaitUntil(() => isLastSlotDone);
+
             // Main Loop For Each PayTableLine:
-            for (int i = 1; i <= 7/*Enum.GetNames(typeof(PayTableLine)).Length*/; i++)
+            for (int i = 1; i <= /*14*/Enum.GetNames(typeof(PayTableLine)).Length-1; i++)
             {
                 // Reset the counters and change the PayTableLine
                 tableLine = (PayTableLine)i;
@@ -188,7 +358,7 @@ public class Board : MonoBehaviour
                 PanelIndexFromPayline();
 
                 // Start at the right-most panel in this row 
-                referencePanel = slots[slotIndex].getPanels()[panelIndex].GetFruit();
+                referencePanel = slots[slotIndex].GetPanels()[panelIndex].GetFruit();
                 localMaxIndex = slotIndex;
                 //Debug.LogWarning("Time: " + Time.time + " | " + "ReferencePanel: " + referencePanel + " | " +
                 //                "slotIndex: " + slotIndex + " | " + "localMaxIndex: " + localMaxIndex);
@@ -197,7 +367,7 @@ public class Board : MonoBehaviour
                 slotIndex--;
                 PanelIndexFromPayline();
 
-                nextPanel = slots[slotIndex].getPanels()[panelIndex].GetFruit();
+                nextPanel = slots[slotIndex].GetPanels()[panelIndex].GetFruit();
                 //Debug.Log("Time: " + Time.time + " | " + "NextPanel: " + nextPanel + " | " +
                 //           "slotIndex: " + slotIndex);
 
@@ -227,7 +397,6 @@ public class Board : MonoBehaviour
                             //    "AbsMaxOcc: " + absMaxOccurance + " | " + "AbsMaxIndex: " + absMaxIndex);
                         }
 
-
                         // Try the next panel to the left and reset the occurance counters
 
                         referencePanel = nextPanel;
@@ -248,7 +417,7 @@ public class Board : MonoBehaviour
                     }
                     else
                     {
-                        nextPanel = slots[slotIndex].getPanels()[panelIndex].GetFruit();
+                        nextPanel = slots[slotIndex].GetPanels()[panelIndex].GetFruit();
                     }
 
                     //Debug.Log("Time: " + Time.time + " | " + "NextPanel: " + nextPanel + " | " +
@@ -256,9 +425,11 @@ public class Board : MonoBehaviour
                 }
 
                 // Report the max occurance and pay the player if needed
-
-                // TODO: Only count chains of 3 or higher (absMaxOcc >= 3)
-                int pointsGained = (Panel.panelScores[absMaxPanel] * absMaxOccurance);
+                int pointsGained = 0;
+                if (absMaxOccurance >= 2)
+                {
+                    pointsGained = (Panel.panelScores[absMaxPanel] * absMaxOccurance);
+                }
                 Debug.Log("Time: " + Time.time + "| " + "PayTableLine: " + tableLine + " | " +
                     "Icon: " + absMaxPanel + " | " +
                     "AbsMaxOcc: " + absMaxOccurance + " | " + "AbsMaxIndex: " + absMaxIndex + " | " +
@@ -272,7 +443,6 @@ public class Board : MonoBehaviour
                     yield return DisplayWinningPayline();
                 }
 
-                // TODO: Link up points gained and reference panel to the reference panel UI
                 // Update Score UI // TODO: Make this a EventListner triggered UI update thing.
                 score += pointsGained;
                 scoreText.text = "Score: " + score.ToString("D7");
@@ -293,62 +463,117 @@ public class Board : MonoBehaviour
             switch (tableLine)
             {
                 case PayTableLine.HorizontalTop:
-                    affectedPanels[0] = slots[0].getPanels()[0];
-                    affectedPanels[1] = slots[1].getPanels()[0];
-                    affectedPanels[2] = slots[2].getPanels()[0];
-                    affectedPanels[3] = slots[3].getPanels()[0];
-                    affectedPanels[4] = slots[4].getPanels()[0];
+                    affectedPanels[0] = slots[0].GetPanels()[0];
+                    affectedPanels[1] = slots[1].GetPanels()[0];
+                    affectedPanels[2] = slots[2].GetPanels()[0];
+                    affectedPanels[3] = slots[3].GetPanels()[0];
+                    affectedPanels[4] = slots[4].GetPanels()[0];
                     break;
 
                 case PayTableLine.HorizontalOuter:
-                    affectedPanels[0] = slots[0].getPanels()[1];
-                    affectedPanels[1] = slots[1].getPanels()[1];
-                    affectedPanels[2] = slots[2].getPanels()[1];
-                    affectedPanels[3] = slots[3].getPanels()[1];
-                    affectedPanels[4] = slots[4].getPanels()[1];
+                    affectedPanels[0] = slots[0].GetPanels()[1];
+                    affectedPanels[1] = slots[1].GetPanels()[1];
+                    affectedPanels[2] = slots[2].GetPanels()[1];
+                    affectedPanels[3] = slots[3].GetPanels()[1];
+                    affectedPanels[4] = slots[4].GetPanels()[1];
                     break;
 
                 case PayTableLine.HorizontalInner:
-                    affectedPanels[0] = slots[0].getPanels()[2];
-                    affectedPanels[1] = slots[1].getPanels()[2];
-                    affectedPanels[2] = slots[2].getPanels()[2];
-                    affectedPanels[3] = slots[3].getPanels()[2];
-                    affectedPanels[4] = slots[4].getPanels()[2];
+                    affectedPanels[0] = slots[0].GetPanels()[2];
+                    affectedPanels[1] = slots[1].GetPanels()[2];
+                    affectedPanels[2] = slots[2].GetPanels()[2];
+                    affectedPanels[3] = slots[3].GetPanels()[2];
+                    affectedPanels[4] = slots[4].GetPanels()[2];
                     break;
 
                 case PayTableLine.HorizontalBottom:
-                    affectedPanels[0] = slots[0].getPanels()[3];
-                    affectedPanels[1] = slots[1].getPanels()[3];
-                    affectedPanels[2] = slots[2].getPanels()[3];
-                    affectedPanels[3] = slots[3].getPanels()[3];
-                    affectedPanels[4] = slots[4].getPanels()[3];
+                    affectedPanels[0] = slots[0].GetPanels()[3];
+                    affectedPanels[1] = slots[1].GetPanels()[3];
+                    affectedPanels[2] = slots[2].GetPanels()[3];
+                    affectedPanels[3] = slots[3].GetPanels()[3];
+                    affectedPanels[4] = slots[4].GetPanels()[3];
                     break;
 
-                case PayTableLine.ParabolicUTop:
-                    affectedPanels[0] = slots[0].getPanels()[0];
-                    affectedPanels[1] = slots[1].getPanels()[1];
-                    affectedPanels[2] = slots[2].getPanels()[1];
-                    affectedPanels[3] = slots[3].getPanels()[1];
-                    affectedPanels[4] = slots[4].getPanels()[0];
+                case PayTableLine.BigVTop:
+                    affectedPanels[0] = slots[0].GetPanels()[0];
+                    affectedPanels[1] = slots[1].GetPanels()[1];
+                    affectedPanels[2] = slots[2].GetPanels()[2];
+                    affectedPanels[3] = slots[3].GetPanels()[1];
+                    affectedPanels[4] = slots[4].GetPanels()[0];
                     break;
 
-                case PayTableLine.ParabolicUMiddle:
-                    affectedPanels[0] = slots[0].getPanels()[1];
-                    affectedPanels[1] = slots[1].getPanels()[2];
-                    affectedPanels[2] = slots[2].getPanels()[2];
-                    affectedPanels[3] = slots[3].getPanels()[2];
-                    affectedPanels[4] = slots[4].getPanels()[1];
+                case PayTableLine.BigVBottom:
+                    affectedPanels[0] = slots[0].GetPanels()[1];
+                    affectedPanels[1] = slots[1].GetPanels()[2];
+                    affectedPanels[2] = slots[2].GetPanels()[3];
+                    affectedPanels[3] = slots[3].GetPanels()[2];
+                    affectedPanels[4] = slots[4].GetPanels()[1];
                     break;
 
-                case PayTableLine.ParabolicUBottom:
-                    affectedPanels[0] = slots[0].getPanels()[2];
-                    affectedPanels[1] = slots[1].getPanels()[3];
-                    affectedPanels[2] = slots[2].getPanels()[3];
-                    affectedPanels[3] = slots[3].getPanels()[3];
-                    affectedPanels[4] = slots[4].getPanels()[2];
+                case PayTableLine.BigABottom:
+                    affectedPanels[0] = slots[0].GetPanels()[3];
+                    affectedPanels[1] = slots[1].GetPanels()[2];
+                    affectedPanels[2] = slots[2].GetPanels()[1];
+                    affectedPanels[3] = slots[3].GetPanels()[2];
+                    affectedPanels[4] = slots[4].GetPanels()[3];
                     break;
 
-                    //TODO: ParabolicNTop~Bottom (8-10), BigVTop~Bottom (11-12), BigATop~Bottom (13-14)
+                case PayTableLine.BigATop:
+                    affectedPanels[0] = slots[0].GetPanels()[2];
+                    affectedPanels[1] = slots[1].GetPanels()[1];
+                    affectedPanels[2] = slots[2].GetPanels()[0];
+                    affectedPanels[3] = slots[3].GetPanels()[1];
+                    affectedPanels[4] = slots[4].GetPanels()[2];
+                    break;
+
+                case PayTableLine.WTop:
+                    affectedPanels[0] = slots[0].GetPanels()[0];
+                    affectedPanels[1] = slots[1].GetPanels()[1];
+                    affectedPanels[2] = slots[2].GetPanels()[0];
+                    affectedPanels[3] = slots[3].GetPanels()[1];
+                    affectedPanels[4] = slots[4].GetPanels()[0];
+                    break;
+
+                case PayTableLine.WMiddle:
+                    affectedPanels[0] = slots[0].GetPanels()[1];
+                    affectedPanels[1] = slots[1].GetPanels()[2];
+                    affectedPanels[2] = slots[2].GetPanels()[1];
+                    affectedPanels[3] = slots[3].GetPanels()[2];
+                    affectedPanels[4] = slots[4].GetPanels()[1];
+                    break;
+
+                case PayTableLine.WBottom:
+                    affectedPanels[0] = slots[0].GetPanels()[2];
+                    affectedPanels[1] = slots[1].GetPanels()[3];
+                    affectedPanels[2] = slots[2].GetPanels()[2];
+                    affectedPanels[3] = slots[3].GetPanels()[3];
+                    affectedPanels[4] = slots[4].GetPanels()[2];
+                    break;
+
+                case PayTableLine.MTop:
+                    affectedPanels[0] = slots[0].GetPanels()[1];
+                    affectedPanels[1] = slots[1].GetPanels()[0];
+                    affectedPanels[2] = slots[2].GetPanels()[1];
+                    affectedPanels[3] = slots[3].GetPanels()[0];
+                    affectedPanels[4] = slots[4].GetPanels()[1];
+                    break;
+
+                case PayTableLine.MMiddle:
+                    affectedPanels[0] = slots[0].GetPanels()[2];
+                    affectedPanels[1] = slots[1].GetPanels()[1];
+                    affectedPanels[2] = slots[2].GetPanels()[2];
+                    affectedPanels[3] = slots[3].GetPanels()[1];
+                    affectedPanels[4] = slots[4].GetPanels()[2];
+                    break;
+
+                case PayTableLine.MBottom:
+                    affectedPanels[0] = slots[0].GetPanels()[3];
+                    affectedPanels[1] = slots[1].GetPanels()[2];
+                    affectedPanels[2] = slots[2].GetPanels()[3];
+                    affectedPanels[3] = slots[3].GetPanels()[2];
+                    affectedPanels[4] = slots[4].GetPanels()[3];
+                    break;
+
             }
 
             // Change the PanelState of each panel based on if it's a win or lose
@@ -373,14 +598,9 @@ public class Board : MonoBehaviour
                 panel.SetState(PanelState.Default);
             }
 
-           // Wait fourth a second before moving on to the next PayTableLine
-           yield return new WaitForSeconds(0.25f);
-
         }
 
     }
-
-
 
 }
 
@@ -393,10 +613,15 @@ public enum PayTableLine
    HorizontalOuter = 2, // the second row from top down, panelIndex = 1
    HorizontalInner = 3, // the third from the top down, panelIndex = 2
    HorizontalBottom = 4, // the last (fourth) row from the top down, panelIndex = 3
-   ParabolicUTop = 5, // left-most and right-most panels are panelIndex = 0, the rest are panelIndex = 1
-   ParabolicUMiddle = 6, // left-most and right-most panels are panelIndex = 1, the rest are panelIndex = 2
-   ParabolicUBottom = 7 // left-most and right-most panels are panelIndex = 2, the rest are panelIndex = 3
-   //TODO: ParabolicNTop~Bottom (8-10), BigVTop~Bottom (11-12), BigATop~Bottom (13-14)
-
+   BigVTop = 5, // panelIndex = {0,1,2,1,0} (makes a V on upper half)
+   BigVBottom = 6, // panelIndex = {1,2,3,2,1} (makes a V on bottom half)
+   BigABottom = 7, // panelIndex = {3,2,1,2,3} (makes an A on bottom half)
+   BigATop = 8, // panelIndex = {2,1,0,1,2} (makes an A on upper half)
+   WTop = 9, // panelIndex = {0,1,0,1,0} (makes a W on Top)
+   WMiddle = 10, // panelIndex = {1,2,1,2,1} (makes a W in Middle)
+   WBottom = 11, // panelIndex = {2,3,2,3,2} (makes a W on Bottom)
+   MTop = 12, // panelIndex = {1,0,1,0,1} (makes a M on Top)
+   MMiddle = 13, // panelIndex = {2,1,2,1,2} (makes a M in Middle)
+   MBottom = 14 // panelIndex = {3,2,3,2,3} (makes a M on Bottom)
 }
 
