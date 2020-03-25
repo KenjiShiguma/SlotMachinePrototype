@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 9:50 PM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/25/2020 12:45 AM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -34,6 +34,10 @@ public class Board : MonoBehaviour
     private static List<Sprite> BackgroundImages; // contains all background images
     private Image BackgroundImage; // the currently selected background art
 
+    private Slider masterVolume; // slider to control master volume
+    private Slider musicVolume; // slider to control music volume
+    private Slider SFXVolume; // slider to control SFX volume
+
     public void OpenOptionsTab()
     {
         this.OptionsCloseButton.transform.parent.gameObject.SetActive(true);
@@ -54,6 +58,26 @@ public class Board : MonoBehaviour
         AudioManager.instance.Play((AudioName)backgroundNum);
     }
 
+    // We use Log10(Volume as Percent) * 20 to naturally scale down the sound of the music
+    // Changes the Master Volume using LogScale
+    public void ChangeMasterVolume()
+    {
+        float vol = Mathf.Clamp(masterVolume.value, 0.0001f, 1.0f);
+        AudioManager.instance.mixer.SetFloat("MasterVolume", Mathf.Log10(vol) * 20);  
+    }
+
+    public void ChangeMusicVolume()
+    {
+        float vol = Mathf.Clamp(musicVolume.value, 0.0001f, 1.0f);
+        AudioManager.instance.mixer.SetFloat("MusicVolume", Mathf.Log10(vol) * 20);
+    }
+
+    public void ChangeSFXVolume()
+    {
+        float vol = Mathf.Clamp(SFXVolume.value, 0.0001f, 1.0f);
+        AudioManager.instance.mixer.SetFloat("SFXVolume", Mathf.Log10(vol) * 20);
+    }
+
 
     // Initalize the variables
     private void Start()
@@ -64,7 +88,7 @@ public class Board : MonoBehaviour
         // Create the options references
         OptionsButton = GameObject.Find("OptionsButton").GetComponent<Button>();
         OptionsCloseButton = GameObject.Find("OptionsTab").transform.Find("CloseButton").GetComponent<Button>();
-        CloseOptionsTab();
+        
         if(BackgroundImages == null)
         {
             BackgroundImages = new List<Sprite>();
@@ -73,6 +97,9 @@ public class Board : MonoBehaviour
             BackgroundImages.Add(Resources.Load<Sprite>("_Images/background3"));
         }
         BackgroundImage = GameObject.Find("BackgroundImage").GetComponent<Image>();
+        masterVolume = GameObject.Find("MasterVolumeSlider").GetComponent<Slider>();
+        musicVolume = GameObject.Find("MusicVolumeSlider").GetComponent<Slider>();
+        SFXVolume = GameObject.Find("SFXVolumeSlider").GetComponent<Slider>();
 
         // Create the spin counter and button
         isSpinning = false;
@@ -96,6 +123,9 @@ public class Board : MonoBehaviour
         {
             slots[i] = this.transform.Find("Slot (" + i + ")").GetComponent<Slot>();
         }
+
+        // Close options tab
+        CloseOptionsTab();
 
     }
 

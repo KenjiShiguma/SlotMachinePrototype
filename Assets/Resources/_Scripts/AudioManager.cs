@@ -1,16 +1,19 @@
 ﻿// Author: Kermit Mitchell III, Adapted From Brackeys (https://www.youtube.com/watch?v=6OT43pvUyfY)
-// Start Date: 03/24/2020 8:35 PM | Last Edited: 03/24/2020 10:00 PM
+// Start Date: 03/24/2020 8:35 PM | Last Edited: 03/25/2020 12:00 AM
 // This script manages all game audio and acts as central authority on Audio
 
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager instance; // a singleton of the AudioManager
     public Dictionary<AudioName, Sound> sounds; // all sounds in the game
     public AudioSource backgroundMusic; // the audioSource linked to background music
+    public AudioMixer mixer; // the main audio mixer of the game
+
 
     private void Awake()
     {
@@ -27,6 +30,9 @@ public class AudioManager : MonoBehaviour
 
         DontDestroyOnLoad(this.gameObject);
 
+        // Grab reference to Audio Mixer
+        mixer = Resources.Load<AudioMixer>("_Audio/AudioMixer");
+
 
         // Initalize the sounds dictionary and add each sound
         sounds = new Dictionary<AudioName, Sound>();
@@ -41,6 +47,15 @@ public class AudioManager : MonoBehaviour
         {
             s.source = gameObject.AddComponent<AudioSource>();
             s.source.clip = s.clip;
+            // If AudioName is a Background Music, route to Music Audio Group in Mixer, otherwise Assume it's SFX
+            if ((int)s.name <= 5 && (int)s.name >= 1)
+            {
+                s.source.outputAudioMixerGroup = mixer.FindMatchingGroups("Master/")[0]; // Music AudioMixerGroup
+            }
+            else
+            {
+                s.source.outputAudioMixerGroup = mixer.FindMatchingGroups("Master/")[1]; // SFX AudioMixerGroup
+            }
 
             s.source.volume = s.volume;
             s.source.pitch = s.pitch;
@@ -51,6 +66,7 @@ public class AudioManager : MonoBehaviour
     {
         // Grab the reference to the Background Audio Source
         instance.backgroundMusic = GameObject.Find("BackgroundMusic").GetComponent<AudioSource>();
+        instance.backgroundMusic.outputAudioMixerGroup = mixer.FindMatchingGroups("Master/")[0]; // Music AudioMixerGroup
     }
 
     // Plays any audio file based on AudioName
