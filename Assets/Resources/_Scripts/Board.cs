@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 6:25 PM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/24/2020 9:50 PM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -19,17 +19,61 @@ public class Board : MonoBehaviour
     private Text spinText; // the text for the spinCounter
     private Button spinButton; // the button clicked to make spinning happen
 
-    [SerializeField] private int score; // number of points player has
-    private Text scoreText; // the text for the score
-    private Text gainedText; // shows how many points were gained per payline per spin
-
     private bool isSpinning = false; // flag variable to lock the SpinButton if the user is already spinning
     private bool isLastSlotDone = false; // flag variable to lock EvaluateBoard() until last Slot finishes spinning
     private Toggle autoSpin; // flag variable to loop Spin() if user has AutoSpin enabled
 
+    // TODO: Refactor code to make a GameManager, and move Score, Options code into that section
+    [SerializeField] private int score; // number of points player has
+    private Text scoreText; // the text for the score
+    private Text gainedText; // shows how many points were gained per payline per spin
+
+    private Button OptionsButton; // button to open options tab
+    private Button OptionsCloseButton; // button to close options tab
+
+    private static List<Sprite> BackgroundImages; // contains all background images
+    private Image BackgroundImage; // the currently selected background art
+
+    public void OpenOptionsTab()
+    {
+        this.OptionsCloseButton.transform.parent.gameObject.SetActive(true);
+    }
+
+    public void CloseOptionsTab()
+    {
+        this.OptionsCloseButton.transform.parent.gameObject.SetActive(false);
+    }
+
+    public void ChangeBackgroundArt(int backgroundNum)
+    {
+        BackgroundImage.sprite = BackgroundImages[backgroundNum-1];
+    }
+
+    public void ChangeBackgroundMusic(int backgroundNum)
+    {
+        AudioManager.instance.Play((AudioName)backgroundNum);
+    }
+
+
     // Initalize the variables
     private void Start()
     {
+        // Play bgm1 Music
+        AudioManager.instance.Play(AudioName.BGM1);
+
+        // Create the options references
+        OptionsButton = GameObject.Find("OptionsButton").GetComponent<Button>();
+        OptionsCloseButton = GameObject.Find("OptionsTab").transform.Find("CloseButton").GetComponent<Button>();
+        CloseOptionsTab();
+        if(BackgroundImages == null)
+        {
+            BackgroundImages = new List<Sprite>();
+            BackgroundImages.Add(Resources.Load<Sprite>("_Images/background1"));
+            BackgroundImages.Add(Resources.Load<Sprite>("_Images/background2"));
+            BackgroundImages.Add(Resources.Load<Sprite>("_Images/background3"));
+        }
+        BackgroundImage = GameObject.Find("BackgroundImage").GetComponent<Image>();
+
         // Create the spin counter and button
         isSpinning = false;
         spinCounter = 999;
@@ -637,4 +681,3 @@ public enum PayTableLine
    MMiddle = 13, // panelIndex = {2,1,2,1,2} (makes a M in Middle)
    MBottom = 14 // panelIndex = {3,2,3,2,3} (makes a M on Bottom)
 }
-
