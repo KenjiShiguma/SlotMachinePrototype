@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 9:30 PM | Last Edited: 03/24/2020 1:45 AM
+// Start Date: 03/17/2020 9:30 PM | Last Edited: 04/08/2020 12:50 AM
 // This script helps modify Panels
 
 using System.Collections;
@@ -16,7 +16,7 @@ public class Panel : MonoBehaviour
     private Image icon; // the fruit image on the panel (they actually live in the Slot's Canvas)
     private int points; // the points gained by this fruit
     public static Dictionary<PanelIcon, Sprite> panelSprites; // Holds all panel Sprites 
-    public static Dictionary<PanelIcon, int> panelScores; // Holds all fruit scores
+    public static Dictionary<PanelIcon, int> panelScores; // Holds all scores gained per fruit
     private PanelState state = 0; // determines how panel is displayed
     private RawImage panelBorder; // the border around the panel
 
@@ -42,20 +42,20 @@ public class Panel : MonoBehaviour
         {
             panelScores = new Dictionary<PanelIcon, int>();
             panelScores.Add(PanelIcon.NULL, 0);
-            panelScores.Add(PanelIcon.Apple, 100);
-            panelScores.Add(PanelIcon.Kiwi, 100);
-            panelScores.Add(PanelIcon.Lemon, 100);
-            panelScores.Add(PanelIcon.Orange, 100);
-            panelScores.Add(PanelIcon.Peach, 100);
-            panelScores.Add(PanelIcon.Pear, 100);
-            panelScores.Add(PanelIcon.Pomegranate, 100);
+            panelScores.Add(PanelIcon.Apple, 60);
+            panelScores.Add(PanelIcon.Kiwi, 80);
+            panelScores.Add(PanelIcon.Lemon, 20);
+            panelScores.Add(PanelIcon.Orange, 60);
+            panelScores.Add(PanelIcon.Peach, 40);
+            panelScores.Add(PanelIcon.Pear, 40);
+            panelScores.Add(PanelIcon.Pomegranate, 20);
             panelScores.Add(PanelIcon.Watermelon, 100);
         }
 
         // Grab the sprite reference and change icon to match the fruit
         icon = GameObject.Find("Icon (0)").GetComponent<Image>();
 
-        // Pick the fruit
+        // Pick the intial fruit
         //this.SetFruit(PanelIcon.Pear);
 
         // Grab a reference to the panelBorder
@@ -65,10 +65,9 @@ public class Panel : MonoBehaviour
     }
 
 
-
     // Setters
 
-    // TODO: Make an event listener if the fruit value changes dynamically to call this function
+    // Potential TODO: Make an event listener if the fruit value changes dynamically to call this function
     // Sets the fruit and updates the image and value
     public void SetFruit(PanelIcon icon)
     {

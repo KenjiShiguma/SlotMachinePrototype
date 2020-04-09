@@ -22,7 +22,7 @@ public class Slot : MonoBehaviour
         {
             panels[i] = this.transform.Find("Panel (" + i + ")").GetComponent<Panel>();
             panels[i].SetImage(this.transform.Find("Canvas").Find("MaskImage").Find("Icon (" + i + ")").GetComponent<Image>());
-            //panels[i].SetFruit(PanelIcon.Pear);
+            //panels[i].SetFruit(PanelIcon.Pear); // uncomment if you want to set an initial fruit
             panels[i].SetState(PanelState.Default);
         }
 

@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 03/25/2020 12:45 AM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 04/08/2020 9:15 PM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -12,95 +12,19 @@ public class Board : MonoBehaviour
 {
     // Declare the variables
 
-    // TODO: Make a singleton of the board for use in a game manager script
+    // Potential TODO: Make a singleton of the board for use in a game manager script
     private Slot[] slots; // the slots on the Board, from left to right 0-4
 
     [SerializeField] private int spinCounter; // number of spins player has
     private Text spinText; // the text for the spinCounter
     private Button spinButton; // the button clicked to make spinning happen
-
     private bool isSpinning = false; // flag variable to lock the SpinButton if the user is already spinning
     private bool isLastSlotDone = false; // flag variable to lock EvaluateBoard() until last Slot finishes spinning
     private Toggle autoSpin; // flag variable to loop Spin() if user has AutoSpin enabled
 
-    // TODO: Refactor code to make a GameManager, and move Score, Options code into that section
-    [SerializeField] private int score; // number of points player has
-    private Text scoreText; // the text for the score
-    private Text gainedText; // shows how many points were gained per payline per spin
-
-    private Button OptionsButton; // button to open options tab
-    private Button OptionsCloseButton; // button to close options tab
-
-    private static List<Sprite> BackgroundImages; // contains all background images
-    private Image BackgroundImage; // the currently selected background art
-
-    private Slider masterVolume; // slider to control master volume
-    private Slider musicVolume; // slider to control music volume
-    private Slider SFXVolume; // slider to control SFX volume
-
-    public void OpenOptionsTab()
-    {
-        this.OptionsCloseButton.transform.parent.gameObject.SetActive(true);
-    }
-
-    public void CloseOptionsTab()
-    {
-        this.OptionsCloseButton.transform.parent.gameObject.SetActive(false);
-    }
-
-    public void ChangeBackgroundArt(int backgroundNum)
-    {
-        BackgroundImage.sprite = BackgroundImages[backgroundNum-1];
-    }
-
-    public void ChangeBackgroundMusic(int backgroundNum)
-    {
-        AudioManager.instance.Play((AudioName)backgroundNum);
-    }
-
-    // We use Log10(Volume as Percent) * 20 to naturally scale down the sound of the music
-    // Changes the Master Volume using LogScale
-    public void ChangeMasterVolume()
-    {
-        float vol = Mathf.Clamp(masterVolume.value, 0.0001f, 1.0f);
-        AudioManager.instance.mixer.SetFloat("MasterVolume", Mathf.Log10(vol) * 20);  
-    }
-
-    public void ChangeMusicVolume()
-    {
-        float vol = Mathf.Clamp(musicVolume.value, 0.0001f, 1.0f);
-        AudioManager.instance.mixer.SetFloat("MusicVolume", Mathf.Log10(vol) * 20);
-    }
-
-    public void ChangeSFXVolume()
-    {
-        float vol = Mathf.Clamp(SFXVolume.value, 0.0001f, 1.0f);
-        AudioManager.instance.mixer.SetFloat("SFXVolume", Mathf.Log10(vol) * 20);
-    }
-
-
     // Initalize the variables
     private void Start()
     {
-        // Play bgm1 Music
-        AudioManager.instance.Play(AudioName.BGM1);
-
-        // Create the options references
-        OptionsButton = GameObject.Find("OptionsButton").GetComponent<Button>();
-        OptionsCloseButton = GameObject.Find("OptionsTab").transform.Find("CloseButton").GetComponent<Button>();
-        
-        if(BackgroundImages == null)
-        {
-            BackgroundImages = new List<Sprite>();
-            BackgroundImages.Add(Resources.Load<Sprite>("_Images/background1"));
-            BackgroundImages.Add(Resources.Load<Sprite>("_Images/background2"));
-            BackgroundImages.Add(Resources.Load<Sprite>("_Images/background3"));
-        }
-        BackgroundImage = GameObject.Find("BackgroundImage").GetComponent<Image>();
-        masterVolume = GameObject.Find("MasterVolumeSlider").GetComponent<Slider>();
-        musicVolume = GameObject.Find("MusicVolumeSlider").GetComponent<Slider>();
-        SFXVolume = GameObject.Find("SFXVolumeSlider").GetComponent<Slider>();
-
         // Create the spin counter and button
         isSpinning = false;
         spinCounter = 999;
@@ -109,23 +33,12 @@ public class Board : MonoBehaviour
         spinButton = GameObject.Find("SpinButton").GetComponent<Button>();
         autoSpin = GameObject.Find("AutoSpinToggle").GetComponent<Toggle>();
 
-
-        // Create the score text
-        score = 0;
-        scoreText = GameObject.Find("ScoreText").GetComponent<Text>();
-        scoreText.text = score.ToString("D7");
-        gainedText = GameObject.Find("PointsGainedText").GetComponent<Text>();
-        gainedText.text = "";
-
         // Create the GameBoard
         slots = new Slot[5]; // because the GameBoard is a 4x5
         for(int i = 0; i < slots.Length; i++)
         {
             slots[i] = this.transform.Find("Slot (" + i + ")").GetComponent<Slot>();
         }
-
-        // Close options tab
-        CloseOptionsTab();
 
     }
 
@@ -167,6 +80,7 @@ public class Board : MonoBehaviour
         // Coroutine to make the reel spin
         IEnumerator SpinSlot(Slot slot)
         {
+            // Reset the locks
             isLastSlotDone = false;
             Vector2 pos = Vector3.zero;
 
@@ -216,6 +130,9 @@ public class Board : MonoBehaviour
                 yield return null;
             }
 
+            // Play the slotStop sound effect
+            AudioManager.instance.Play((AudioName)UnityEngine.Random.Range(8, 11));
+
             // Update each Panel in this Slot with the new PanelIcons/Sprites
             slot.SetEachPanelIcons();
 
@@ -231,7 +148,10 @@ public class Board : MonoBehaviour
         // Coroutine to make all the reels spin almost concurrently
         IEnumerator SpinEachSlot()
         {
-            foreach(Slot slot in this.slots)
+            // Play the startSpin sound effect
+            AudioManager.instance.Play(AudioName.SlotSpinStart);
+
+            foreach (Slot slot in this.slots)
             {
                 StartCoroutine(SpinSlot(slot));
                 yield return new WaitForSeconds(0.25f);
@@ -463,11 +383,11 @@ public class Board : MonoBehaviour
                         //        "LocalMaxOcc: " + localMaxOccurance + " | " +
                         //        "AbsMaxOcc (BEFORE): " + absMaxOccurance);
 
-                        // Update the max occurance if needed
-                        if (localMaxOccurance > absMaxOccurance && Panel.panelScores[referencePanel] >= Panel.panelScores[absMaxPanel])
+                        // Update the winning panel and streak if needed
+                        if(CalculateScore(referencePanel, localMaxOccurance) > CalculateScore(absMaxPanel, absMaxOccurance))
                         {
-                            absMaxOccurance = localMaxOccurance;
                             absMaxPanel = referencePanel;
+                            absMaxOccurance = localMaxOccurance;
                             absMaxIndex = localMaxIndex;
 
                             //Debug.Log("Time: " + Time.time + " | " + "Updating AbsMax..." + " | " +
@@ -502,28 +422,27 @@ public class Board : MonoBehaviour
                 }
 
                 // Report the max occurance and pay the player if needed
-                int pointsGained = 0;
-                if (absMaxOccurance >= 3) // TODO: Change to 3 on Release Build; Keep 2 for Debug Build
-                {
-                    pointsGained = (Panel.panelScores[absMaxPanel] * absMaxOccurance);
-                }
+                int pointsGained = CalculateScore(absMaxPanel, absMaxOccurance);
+
                 Debug.Log("Time: " + Time.time + "| " + "PayTableLine: " + tableLine + " | " +
                     "Icon: " + absMaxPanel + " | " +
                     "AbsMaxOcc: " + absMaxOccurance + " | " + "AbsMaxIndex: " + absMaxIndex + " | " +
-                    "Points: " + pointsGained + " (" + Panel.panelScores[absMaxPanel] + "*" + absMaxOccurance + ")");
+                    "Points: " + pointsGained);
+                    //+ " (" + Panel.panelScores[absMaxPanel] + "*" + absMaxOccurance + ")");
 
                 // Display the winning configuration's PayTableLine as a Coroutine
                 if(pointsGained > 0)
                 {
                     yield return new WaitForSeconds(0.50f);
-                    gainedText.text = "+" + pointsGained;
+                    AudioManager.instance.Play(AudioName.Payout);
+                    GameManager.instance.gainedText.text = "+" + pointsGained;
                     yield return DisplayWinningPayline();
                 }
 
                 // Update Score UI // TODO: Make this a EventListner triggered UI update thing.
-                score += pointsGained;
-                scoreText.text = score.ToString("D7");
-                gainedText.text = "";
+                GameManager.instance.score += pointsGained;
+                GameManager.instance.scoreText.text = GameManager.instance.score.ToString("D7");
+                GameManager.instance.gainedText.text = "";
             }
 
             // Reset the isSpinning lock
@@ -539,6 +458,33 @@ public class Board : MonoBehaviour
             }
 
             
+        }
+
+        // Determines the points based on the PanelIcon and its max occurance 
+        int CalculateScore(PanelIcon icon, int maxOccurance)
+        {
+            int answer = 0;
+
+            int comboMultipler = 0;
+            switch (maxOccurance)
+            {
+                default:
+                    comboMultipler = 0;
+                    break;
+                case 3:
+                    comboMultipler = 1;
+                    break;
+                case 4:
+                    comboMultipler = 3;
+                    break;
+                case 5:
+                    comboMultipler = 5;
+                    break;
+            }
+
+            answer = Panel.panelScores[icon] * comboMultipler;
+
+            return answer;
         }
 
         // Coroutine to show the winning panels animation

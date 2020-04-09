@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III, Adapted From Brackeys (https://www.youtube.com/watch?v=6OT43pvUyfY)
-// Start Date: 03/24/2020 8:35 PM | Last Edited: 03/25/2020 12:00 AM
+// Start Date: 03/24/2020 8:35 PM | Last Edited: 04/08/2020 9:45 PM
 // This script manages all game audio and acts as central authority on Audio
 
 using System.Collections;
@@ -36,11 +36,18 @@ public class AudioManager : MonoBehaviour
 
         // Initalize the sounds dictionary and add each sound
         sounds = new Dictionary<AudioName, Sound>();
+        // Music //
         sounds.Add(AudioName.BGM1, new Sound(AudioName.BGM1, Resources.Load<AudioClip>("_Audio/Music/bgm1 - banjos"), null, 0.1f));
-        sounds.Add(AudioName.BGM2, new Sound(AudioName.BGM2, Resources.Load<AudioClip>("_Audio/Music/bgm2 - pipa"), null, 0.1f));
-        sounds.Add(AudioName.BGM3, new Sound(AudioName.BGM3, Resources.Load<AudioClip>("_Audio/Music/bgm3 - comedy"), null, 0.1f));
-        sounds.Add(AudioName.BGM4, new Sound(AudioName.BGM4, Resources.Load<AudioClip>("_Audio/Music/bgm4 - tranquil"), null, 0.1f));
+        sounds.Add(AudioName.BGM2, new Sound(AudioName.BGM2, Resources.Load<AudioClip>("_Audio/Music/bgm2 - pipa"), null, 0.035f));
+        sounds.Add(AudioName.BGM3, new Sound(AudioName.BGM3, Resources.Load<AudioClip>("_Audio/Music/bgm3 - comedy"), null, 0.05f));
+        sounds.Add(AudioName.BGM4, new Sound(AudioName.BGM4, Resources.Load<AudioClip>("_Audio/Music/bgm4 - tranquil"), null, 0.2f));
         sounds.Add(AudioName.BGM5, new Sound(AudioName.BGM5, Resources.Load<AudioClip>("_Audio/Music/bgm5 - 8-bit hiphop"), null, 0.1f));
+        // SFX //
+        sounds.Add(AudioName.Payout, new Sound(AudioName.Payout, Resources.Load<AudioClip>("_Audio/SFX/payout"), null, 0.25f));
+        sounds.Add(AudioName.SlotSpinStart, new Sound(AudioName.SlotSpinStart, Resources.Load<AudioClip>("_Audio/SFX/slotSpinStart"), null, 0.12f));
+        sounds.Add(AudioName.SlotSpinEnd1, new Sound(AudioName.SlotSpinEnd1, Resources.Load<AudioClip>("_Audio/SFX/slotSpinEnd1"), null, 0.12f));
+        sounds.Add(AudioName.SlotSpinEnd2, new Sound(AudioName.SlotSpinEnd2, Resources.Load<AudioClip>("_Audio/SFX/slotSpinEnd2"), null, 0.12f));
+        sounds.Add(AudioName.SlotSpinEnd3, new Sound(AudioName.SlotSpinEnd3, Resources.Load<AudioClip>("_Audio/SFX/slotSpinEnd3"), null, 0.12f));
 
         // Setup all the sounds
         foreach (Sound s in sounds.Values)
@@ -51,6 +58,7 @@ public class AudioManager : MonoBehaviour
             if ((int)s.name <= 5 && (int)s.name >= 1)
             {
                 s.source.outputAudioMixerGroup = mixer.FindMatchingGroups("Master/")[0]; // Music AudioMixerGroup
+                s.source.loop = true;
             }
             else
             {
@@ -65,8 +73,12 @@ public class AudioManager : MonoBehaviour
     private void Start()
     {
         // Grab the reference to the Background Audio Source
-        instance.backgroundMusic = GameObject.Find("BackgroundMusic").GetComponent<AudioSource>();
+        instance.backgroundMusic = this.gameObject.AddComponent<AudioSource>();
         instance.backgroundMusic.outputAudioMixerGroup = mixer.FindMatchingGroups("Master/")[0]; // Music AudioMixerGroup
+        instance.backgroundMusic.loop = true;
+        
+        // Play bgm1 Music
+        instance.Play(AudioName.BGM1);
     }
 
     // Plays any audio file based on AudioName
@@ -129,11 +141,18 @@ public class Sound
 public enum AudioName
 {
     NULL = 0,
-    BGM1 = 1, // background music 1 - banjo
-    BGM2 = 2, // background music 2 - pipa
-    BGM3 = 3, // background music 3 - comedy
-    BGM4 = 4, // background music 4 - tranquil
-    BGM5 = 5 // background music 5 - 8-bit hiphop
+    // Music //
+    BGM1, // background music 1 - banjo
+    BGM2, // background music 2 - pipa
+    BGM3, // background music 3 - comedy
+    BGM4, // background music 4 - tranquil
+    BGM5, // background music 5 - 8-bit hiphop
+    // SFX//
+    Payout, // SFX for winning
+    SlotSpinStart, // SFX for the slot reel spinning
+    SlotSpinEnd1, // SFX for the slot reel stopping its spin (1)
+    SlotSpinEnd2, // SFX for the slot reel stopping its spin (2)
+    SlotSpinEnd3 // SFX for the slot reel stopping its spin (3)
 }
 
 
