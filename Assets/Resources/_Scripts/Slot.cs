@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 11:10 PM | Last Edited: 03/24/2020 1:05 AM
+// Start Date: 03/17/2020 11:10 PM | Last Edited: 04/08/2020 11:55 PM
 // This script helps modify Slots
 
 using System.Collections;
@@ -22,7 +22,8 @@ public class Slot : MonoBehaviour
         {
             panels[i] = this.transform.Find("Panel (" + i + ")").GetComponent<Panel>();
             panels[i].SetImage(this.transform.Find("Canvas").Find("MaskImage").Find("Icon (" + i + ")").GetComponent<Image>());
-            //panels[i].SetFruit(PanelIcon.Pear); // uncomment if you want to set an initial fruit
+            //panels[i].SetFruit(PanelIcon.Pear); // uncomment if you want to set an initial fruit'
+            panels[i].SetPanelBorder(panels[i].transform.Find("Canvas").transform.Find("PanelBorder").GetComponent<RawImage>());
             panels[i].SetState(PanelState.Default);
         }
 

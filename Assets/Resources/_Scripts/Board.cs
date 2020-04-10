@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 04/08/2020 9:15 PM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 04/09/2020 8:50 PM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -84,13 +84,28 @@ public class Board : MonoBehaviour
             isLastSlotDone = false;
             Vector2 pos = Vector3.zero;
 
-            Timer timer = new Timer(3.75f); // Controls how long each Slot spins for
+            float reelSpinTime = 3.75f; // How long to spin reels for
+             // NOTE: For some reason, different build platforms handle the 
+            // timer at different pacings, so adjust the timer based on 
+            // build platform (does not affect gameplay)
+            #if UNITY_STANDALONE
+                reelSpinTime = 3.75f * 16;
+            #endif
+
+            #if UNITY_WEBGL
+                reelSpinTime = 3.75f * 0.5f;
+            #endif
+
+
+
+
+            Timer timer = new Timer(reelSpinTime); // Controls how long each Slot spins for
             while (!timer.IsTimeUp())
             {
                 // Make all icons in the slot move down
                 foreach (Image image in slot.GetIcons())
                 {
-                    image.rectTransform.Translate(Vector2.down * 100 * Time.deltaTime);
+                    image.rectTransform.Translate(Vector2.down * 100 * Time.smoothDeltaTime);
                     // Randomly pick a new PanelIcon for the Icon once it goes offscreen, and move it to the top
                     if (image.rectTransform.position.y <= -35)
                     {
@@ -110,9 +125,23 @@ public class Board : MonoBehaviour
 
             }
 
+            
+            float reelStopTime = 0.5f; // Slow the spin speed at the end of spinning
+            // NOTE: For some reason, different build platforms handle the 
+            // timer at different pacings, so adjust the timer based on 
+            // build platform (does not affect gameplay)
+
+            #if UNITY_STANDALONE
+                reelStopTime = 0.5f * 32;
+            #endif
+
+            #if UNITY_WEBGL
+                reelStopTime = 0.5f;
+            #endif
+
             // Smoothly mount the icons into the correct locations
             int[] lerpYTargets = { 10, 0, -10, -20, -30 }; // the yPos of the resting position of each Slot Icon
-            timer.SetCooldown(0.50f);
+            timer.SetCooldown(reelStopTime);
             timer.ResetTimer();
             
             while (!timer.IsTimeUp())
@@ -424,11 +453,11 @@ public class Board : MonoBehaviour
                 // Report the max occurance and pay the player if needed
                 int pointsGained = CalculateScore(absMaxPanel, absMaxOccurance);
 
-                Debug.Log("Time: " + Time.time + "| " + "PayTableLine: " + tableLine + " | " +
-                    "Icon: " + absMaxPanel + " | " +
-                    "AbsMaxOcc: " + absMaxOccurance + " | " + "AbsMaxIndex: " + absMaxIndex + " | " +
-                    "Points: " + pointsGained);
-                    //+ " (" + Panel.panelScores[absMaxPanel] + "*" + absMaxOccurance + ")");
+                //Debug.Log("Time: " + Time.time + "| " + "PayTableLine: " + tableLine + " | " +
+                //    "Icon: " + absMaxPanel + " | " +
+                //    "AbsMaxOcc: " + absMaxOccurance + " | " + "AbsMaxIndex: " + absMaxIndex + " | " +
+                //    "Points: " + pointsGained);
+                    
 
                 // Display the winning configuration's PayTableLine as a Coroutine
                 if(pointsGained > 0)

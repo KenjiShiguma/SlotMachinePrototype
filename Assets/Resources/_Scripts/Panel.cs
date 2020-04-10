@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 9:30 PM | Last Edited: 04/08/2020 12:50 AM
+// Start Date: 03/17/2020 9:30 PM | Last Edited: 04/08/2020 11:55 PM
 // This script helps modify Panels
 
 using System.Collections;
@@ -13,12 +13,12 @@ public class Panel : MonoBehaviour
     // Declare the variables
 
     [SerializeField] private PanelIcon fruit; // the fruit on the panel
-    private Image icon; // the fruit image on the panel (they actually live in the Slot's Canvas)
+    [SerializeField] private Image icon; // the fruit image on the panel (they actually live in the Slot's Canvas)
     private int points; // the points gained by this fruit
     public static Dictionary<PanelIcon, Sprite> panelSprites; // Holds all panel Sprites 
     public static Dictionary<PanelIcon, int> panelScores; // Holds all scores gained per fruit
     private PanelState state = 0; // determines how panel is displayed
-    private RawImage panelBorder; // the border around the panel
+    [SerializeField] private RawImage panelBorder; // the border around the panel
 
     private void Start()
     {
@@ -107,6 +107,11 @@ public class Panel : MonoBehaviour
     public void SetImage(Image image)
     {
         this.icon = image;
+    }
+
+    public void SetPanelBorder(RawImage image)
+    {
+        this.panelBorder = image;
     }
 
     // Getters
