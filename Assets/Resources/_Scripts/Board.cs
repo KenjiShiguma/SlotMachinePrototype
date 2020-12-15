@@ -1,5 +1,5 @@
 ﻿// Author: Kermit Mitchell III
-// Start Date: 03/17/2020 8:45 PM | Last Edited: 04/09/2020 8:50 PM
+// Start Date: 03/17/2020 8:45 PM | Last Edited: 12/15/2020 5:45 AM
 // This script runs the game board and creates new spins and etc.
 
 using System;
@@ -21,6 +21,13 @@ public class Board : MonoBehaviour
     private bool isSpinning = false; // flag variable to lock the SpinButton if the user is already spinning
     private bool isLastSlotDone = false; // flag variable to lock EvaluateBoard() until last Slot finishes spinning
     private Toggle autoSpin; // flag variable to loop Spin() if user has AutoSpin enabled
+    private Panel[] affectedPanels; // panels to temporarily highlight on a win
+
+    // Cache repeating Wait objects so 'new' isn't called in every Coroutine call below
+    private WaitForSeconds delayBetweenSlotSpins;
+    private WaitForSeconds delayBeforeShowingWin;
+    private WaitForSeconds delayAfterShowingWin;
+    private WaitUntil waitForAllSlotsDone;
 
     // Initalize the variables
     private void Start()
@@ -39,7 +46,14 @@ public class Board : MonoBehaviour
         {
             slots[i] = this.transform.Find("Slot (" + i + ")").GetComponent<Slot>();
         }
+        affectedPanels = new Panel[slots.Length]; 
 
+        // Initilaize the cached Wait objects for the Coroutines used later
+        delayBetweenSlotSpins = new WaitForSeconds(0.25f);
+        delayBeforeShowingWin = new WaitForSeconds(0.5f);
+        delayAfterShowingWin = new WaitForSeconds(1.5f);
+        waitForAllSlotsDone = new WaitUntil(() => isLastSlotDone);
+        
     }
 
     // Generates a new game board, deducts a spin
@@ -85,18 +99,20 @@ public class Board : MonoBehaviour
             Vector2 pos = Vector3.zero;
 
             float reelSpinTime = 3.75f; // How long to spin reels for
-             // NOTE: For some reason, different build platforms handle the 
+            // NOTE: For some reason, different build platforms handle the 
             // timer at different pacings, so adjust the timer based on 
             // build platform (does not affect gameplay)
             #if UNITY_STANDALONE
                 reelSpinTime = 3.75f * 16;
             #endif
-
+            
+            #if UNITY_EDITOR
+                reelSpinTime = 3.75f;
+            #endif
+            
             #if UNITY_WEBGL
                 reelSpinTime = 3.75f * 0.5f;
             #endif
-
-
 
 
             Timer timer = new Timer(reelSpinTime); // Controls how long each Slot spins for
@@ -134,10 +150,15 @@ public class Board : MonoBehaviour
             #if UNITY_STANDALONE
                 reelStopTime = 0.5f * 32;
             #endif
-
+            
+            #if UNITY_EDITOR
+                reelStopTime = 0.5f;
+            #endif
+            
             #if UNITY_WEBGL
                 reelStopTime = 0.5f;
             #endif
+
 
             // Smoothly mount the icons into the correct locations
             int[] lerpYTargets = { 10, 0, -10, -20, -30 }; // the yPos of the resting position of each Slot Icon
@@ -183,7 +204,7 @@ public class Board : MonoBehaviour
             foreach (Slot slot in this.slots)
             {
                 StartCoroutine(SpinSlot(slot));
-                yield return new WaitForSeconds(0.25f);
+                yield return delayBetweenSlotSpins;
             }
         }
 
@@ -368,7 +389,7 @@ public class Board : MonoBehaviour
         IEnumerator EvaluateEachPayline()
         {
             // Only start this after all Slot reels have finished spinning
-            yield return new WaitUntil(() => isLastSlotDone);
+            yield return waitForAllSlotsDone;
 
             // Main Loop For Each PayTableLine:
             for (int i = 1; i <= /*14*/Enum.GetNames(typeof(PayTableLine)).Length-1; i++)
@@ -462,7 +483,7 @@ public class Board : MonoBehaviour
                 // Display the winning configuration's PayTableLine as a Coroutine
                 if(pointsGained > 0)
                 {
-                    yield return new WaitForSeconds(0.50f);
+                    yield return delayBeforeShowingWin;
                     AudioManager.instance.Play(AudioName.Payout);
                     GameManager.instance.gainedText.text = "+" + pointsGained;
                     yield return DisplayWinningPayline();
@@ -519,9 +540,7 @@ public class Board : MonoBehaviour
         // Coroutine to show the winning panels animation
         IEnumerator DisplayWinningPayline()
         {
-            // Get a list of all panels to change their display state
-            Panel[] affectedPanels = new Panel[slots.Length]; 
-
+            // Determine the affected panels in the PayTableLine to highlight/dim
             switch (tableLine)
             {
                 case PayTableLine.HorizontalTop:
@@ -652,7 +671,7 @@ public class Board : MonoBehaviour
             }
 
             // View the winning arrangement for 1.5 seconds
-            yield return new WaitForSeconds(1.5f);
+            yield return delayAfterShowingWin;
 
            // Reset all affected panels back to normal
            foreach(Panel panel in affectedPanels)
